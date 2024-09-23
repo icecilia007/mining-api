@@ -10,3 +10,8 @@ variable "project" {
   type = string
   default = "mining-api"
 }
+
+variable "aws_region" {
+  type = string
+  default = "us-east-2"
+}

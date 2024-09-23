@@ -1,3 +1,9 @@
+data "aws_caller_identity" "current" {}
+
+locals {
+  aws_account_id = data.aws_caller_identity.current.account_id
+}
+
 # IAM Policy Document for Lambda Role
 data "aws_iam_policy_document" "assume_role_lambda" {
   statement {
@@ -83,41 +89,49 @@ resource "aws_lambda_function_event_invoke_config" "lambda_invoke_config" {
 
 resource "null_resource" "build_and_push_ecr_lambda" {
   triggers = {
-    python_files_hash = filesha256("${path.module}/../../scripts")
-    docker_files_hash = filesha256("${path.module}/../../Dockerfile")
+    python_files_hash = filesha256(var.scripts_local)
+    docker_files_hash = filesha256(var.scripts_dockerfile)
   }
 
   provisioner "local-exec" {
     command = "chmod +x ./${path.module}/build_and_push_ecr.sh && ./${path.module}/build_and_push_ecr.sh"
     environment = {
-      FOLDER         = "lambda/"
+      FOLDER         = var.folder
       AWS_REGION     = var.aws_region
       AWS_ACCOUNT_ID = local.aws_account_id
-      ECR_REPO_NAME  = aws_ecr_repository.lambda_exemplo.name
+      ECR_REPO_NAME  = aws_ecr_repository.lambda_docker.name
       IMAGE_TAG      = "latest"
     }
     interpreter = ["/bin/bash", "-c"]
   }
-  depends_on = [aws_ecr_repository.lambda_exemplo]
+  depends_on = [aws_ecr_repository.lambda_docker]
 }
 
 
-resource "null_resource" "update_lambda" {
-  triggers = {
-    python_files_hash = filesha256("../scripts/ecr/lambda/main.py")
-    docker_files_hash = filesha256("../scripts/ecr/lambda/Dockerfile")
-  }
+#resource "null_resource" "update_lambda" {
+#  triggers = {
+#    python_files_hash = filesha256(var.scripts_local)
+#    docker_files_hash = filesha256(var.scripts_dockerfile)
+#  }
+#
+#  provisioner "local-exec" {
+#    command = "chmod +x ./${path.module}/update_lambda.sh && ./${path.module}/update_lambda.sh"
+#    environment = {
+#      AWS_REGION     = var.aws_region
+#      AWS_ACCOUNT_ID = local.aws_account_id
+#      ECR_REPO_NAME  = aws_ecr_repository.lambda_docker.name
+#      IMAGE_TAG      = "latest"
+#      LAMBDA_UPDATE  = aws_lambda_function.lambda_function.function_name
+#    }
+#    interpreter = ["/bin/bash", "-c"]
+#  }
+#  depends_on = [null_resource.build_and_push_ecr_lambda]
+#}
 
-  provisioner "local-exec" {
-    command = "chmod +x ./${path.module}/update_lambda.sh && ./${path.module}/update_lambda.sh"
-    environment = {
-      AWS_REGION     = var.aws_region
-      AWS_ACCOUNT_ID = local.aws_account_id
-      ECR_REPO_NAME  = aws_ecr_repository.lambda_exemplo.name
-      IMAGE_TAG      = "latest"
-      LAMBDA_UPDATE  = module.lambda_1.name
-    }
-    interpreter = ["/bin/bash", "-c"]
-  }
-  depends_on = [module.lambda_1]
-}
+#resource "null_resource" "validate_ecr_image_raw" {
+#  provisioner "local-exec" {
+#    command = "aws ecr describe-images --repository-name ${aws_ecr_repository.lambda_docker.name} --image-ids imageTag=latest --region ${var.aws_region}"
+#  }
+#  depends_on = [null_resource.build_and_push_ecr_lambda]
+#}
+

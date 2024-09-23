@@ -3,11 +3,6 @@ variable "function_name" {
   type        = string
 }
 
-variable "source_file" {
-  description = "Arquivo fonte da Lambda (caminho para o código Python)"
-  type        = string
-}
-
 variable "handler" {
   description = "Handler da função Lambda (ex: file_name.function_name)"
   type        = string
@@ -54,15 +49,34 @@ variable "additional_policies" {
   type        = list(string)
   default     = []
 }
+
 variable "env" {
   type = string
   default = "prod"
 }
+
 variable "s3name" {
   type = string
   default = "exemplo"
 }
+
 variable "project" {
   type = string
   default = "mining-api"
+}
+
+variable "aws_region" {
+  type = string
+}
+
+variable "scripts_local" {
+  type = string
+}
+
+variable "scripts_dockerfile" {
+  type = string
+}
+
+variable "folder" {
+  type = string
 }

@@ -18,3 +18,13 @@ module "s3bucket" {
     "raw"
   ]
 }
+
+module "lambada_raw" {
+  source = "./modules/lambda"
+  aws_region         = var.aws_region
+  function_name      = "raw"
+  handler            = "main.main"
+  scripts_dockerfile = "../scripts/raw/Dockerfile"
+  scripts_local      = "../scripts/raw/main.py"
+  folder = "../scripts/raw/"
+}
